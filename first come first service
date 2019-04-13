@@ -1,0 +1,161 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct  data
+{
+    int hour;
+    int min;
+}time;
+
+typedef struct link_node
+{
+    int id;
+    char name[20];
+    time arrive;
+    int zx;
+    time start;
+    time finish;
+    int zz;
+    float zzxs;
+    struct link_node *next;
+}node;
+typedef node *linklist;
+
+void print(linklist head)
+{
+	linklist p,q;
+	p=head->next;
+	q=p->next;
+	float a=q->arrive.hour*60-p->arrive.hour*60+q->arrive.min-p->arrive.min;
+	printf("%f\n",a);
+}
+
+void sort(linklist head)
+{
+	linklist pre,q,p,s;
+	p=head->next;
+    head->next=NULL;
+    while (p)
+    {
+        s=p;
+        p=p->next;          //取结点
+        pre=head;
+        q=head->next;
+		while (q&&s->arrive.hour>q->arrive.hour)            //找位置
+        {
+          	pre=q;
+           	q=q->next;
+       	}
+       	while (q&&s->arrive.hour==q->arrive.hour&&s->arrive.min>q->arrive.min)            //找位置
+        {
+          	pre=q;
+           	q=q->next;
+       	}
+        s->next=q;                  //将s指示的结点插入到pre与q指示的结点中间
+        pre->next=s;
+    }
+
+}
+
+linklist input()
+{
+    linklist head,r,s;
+    int x,j;
+    head=r=(linklist)malloc(sizeof(node));
+    head->next=NULL;
+
+    printf("请输入进程数：");
+    scanf("%d",&j);
+    printf("请输入%d个进程的\nID号\t名字\t到达时间\t执行时间（分钟）\n",j);
+    scanf("%d",&x);
+    while (x!=-1)
+    {
+         s=(linklist)malloc(sizeof(node));
+         s->id=x;
+		 scanf("%s%d:%d%d",&s->name,&s->arrive.hour,&s->arrive.min,&s->zx);
+         r->next=s;
+         r=s;
+         scanf("%d",&x);
+   }
+    r->next=NULL;
+    sort(head);
+    return head;
+}
+
+void fcfs(linklist head)
+{
+	linklist p,pre;
+	p=head->next;
+	p->start.hour=p->arrive.hour;
+	p->start.min=p->arrive.min;
+	if(p->start.min+p->zx>60||p->start.min+p->zx==60)
+	{
+		p->finish.hour=p->start.hour+1;
+		p->finish.min=p->start.min+p->zx-60;
+	}
+	else
+		{
+			p->finish.hour=p->start.hour;
+			p->finish.min=p->start.min+p->zx;
+		}
+	p->zz=p->finish.hour*60+p->finish.min-p->arrive.hour*60-p->arrive.min;
+	p->zzxs=(float)p->zx/p->zz;
+	pre=p;
+	p=p->next;
+	while(p)
+	{
+		if(pre->finish.hour >= p->arrive.hour && pre->finish.min >= p->arrive.min)
+        {
+            p->start.hour=pre->finish.hour;
+            p->start.min=pre->finish.min;
+        }
+        else
+        {
+            p->start.hour=p->arrive.hour;
+            p->start.min=p->arrive.min;
+        }
+		if(p->start.min+p->zx>=60)
+		{
+			p->finish.hour=p->start.hour+1;
+			p->finish.min=p->start.min + p->zx - 60;
+		}
+		else
+		{
+			p->finish.hour=p->start.hour;
+			p->finish.min=p->start.min+p->zx;
+		}
+		p->zz=p->finish.hour*60+p->finish.min-p->arrive.hour*60-p->arrive.min;
+		p->zzxs=(float)p->zz/p->zx;
+		pre=p;
+		p=p->next;
+	}
+}
+
+void output(linklist head)
+{
+    int i=0;
+	float xtpjzz=0;
+	float xtdqpjzz=0;
+	linklist p;
+    p=head->next;
+    printf("\n模拟进程FCFS调度过程输出结果：\nID号  名字  到达时间  执行时间（分钟）  开始时间  完成时间  周转时间（分钟）  带权周转时间（系数）\n");
+    while(p)
+    {
+        printf("%d    %s     %2d:%02d\t%02d\t\t    %2d:%02d     %2d:%02d         %d          %.2f\n",p->id,p->name,p->arrive.hour,p->arrive.min,p->zx,p->start.hour,p->start.min,p->finish.hour,p->finish.min,p->zz,p->zzxs);
+        xtpjzz+=p->zz;
+		xtdqpjzz+=p->zzxs;
+		p=p->next;
+		i++;
+    }
+	printf("系统平均周转时间为                                                 %.2f\n",xtpjzz/i);
+	printf("系统带权平均周转时间为                                                          %.2f\n",xtdqpjzz/i);
+}
+
+void main()
+{
+    int x;
+	linklist head;
+	head=input();
+    fcfs(head);
+    output(head);
+}
